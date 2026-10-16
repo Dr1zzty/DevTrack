@@ -1,12 +1,9 @@
 namespace DevTrack.Models
 {
-    public class TaskPriority
+    public enum TaskPriority
     {
-        public enum PriorityLevel
-        {
-            Low,
-            Medium,
-            High
-        }
+        Low,
+        Medium,
+        High
     }
 }
