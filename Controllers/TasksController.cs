@@ -91,5 +91,20 @@ namespace DevTrack.Controllers
             return Ok(task);
 
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTask(int id)
+        {
+            var task = await _context.Tasks
+                .FirstOrDefaultAsync(task => task.Id == id && !task.IsDeleted);
+        if (task == null)
+            {
+                return NotFound();
+            }
+        task.IsDeleted = true;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+        }
     }
 }
