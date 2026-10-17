@@ -26,6 +26,20 @@ namespace DevTrack.Controllers
 
             return Ok(tasks);
         }
+        
+        [HttpGet("{id}")]
+        public async Task<ActionResult<TaskItem>> GetTask(int id)
+        {
+            var task = await _context.Tasks
+                .FirstOrDefaultAsync(task => task.Id == id && !task.IsDeleted);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(task);
+        }
 
         [HttpPost]
         public async Task<ActionResult<TaskItem>> CreateTask(TaskItem task)
@@ -35,9 +49,10 @@ namespace DevTrack.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(
-                nameof(GetTasks),
+                nameof(GetTask),
                 new { id = task.Id },
                 task);
+            
         }
     }
 }
