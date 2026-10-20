@@ -26,14 +26,16 @@ A task management API for workplaces.
 
 1. Clone the repository:
 
-   ```bash
    git clone https://github.com/Dr1zzty/DevTrack.git
 
 2. Navigate to the project directory.
+    
     cd DevTrack
 
 3. Restore dependencies.
+    
     dotnet restore
 
 4. Run the application.
+    
     dotnet run
