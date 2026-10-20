@@ -1,9 +1,8 @@
-
 using DevTrack.Data;
+using DevTrack.DTOs;
 using DevTrack.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using DevTrack.DTOs;
 
 namespace DevTrack.Controllers
 {
@@ -27,12 +26,13 @@ namespace DevTrack.Controllers
 
             return Ok(tasks);
         }
-        
+
         [HttpGet("{id}")]
         public async Task<ActionResult<TaskItem>> GetTask(int id)
         {
             var task = await _context.Tasks
-                .FirstOrDefaultAsync(task => task.Id == id && !task.IsDeleted);
+                .FirstOrDefaultAsync(task =>
+                    task.Id == id && !task.IsDeleted);
 
             if (task == null)
             {
@@ -43,8 +43,30 @@ namespace DevTrack.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<TaskItem>> CreateTask(TaskItem task)
+        public async Task<ActionResult<TaskItem>> CreateTask(
+            CreateTaskDto newTask)
         {
+            var task = new TaskItem
+            {
+                Title = newTask.Title.Trim(),
+                Description = newTask.Description,
+                Priority = newTask.Priority,
+                Status = newTask.Status,
+                DueDate = newTask.DueDate,
+                OriginalDueDate = newTask.DueDate,
+                CreatedAt = DateTime.Now,
+                IsDeleted = false
+            };
+
+            if (task.Status == DevTrack.Models.TaskStatus.Completed)
+            {
+                task.CompletedAt = DateTime.Now;
+
+                task.WasCompletedLate =
+                    task.DueDate.HasValue &&
+                    task.CompletedAt.Value > task.DueDate.Value;
+            }
+
             _context.Tasks.Add(task);
 
             await _context.SaveChangesAsync();
@@ -53,23 +75,29 @@ namespace DevTrack.Controllers
                 nameof(GetTask),
                 new { id = task.Id },
                 task);
-            
         }
+
         [HttpPut("{id}")]
-        public async Task<ActionResult<TaskItem>> UpdateTask(int id, UpdateTaskDto updatedTask)
+        public async Task<ActionResult<TaskItem>> UpdateTask(
+            int id,
+            UpdateTaskDto updatedTask)
         {
             var task = await _context.Tasks
-                .FirstOrDefaultAsync(task => task.Id == id && !task.IsDeleted);
+                .FirstOrDefaultAsync(task =>
+                    task.Id == id && !task.IsDeleted);
 
             if (task == null)
             {
-                    return NotFound();
+                return NotFound();
             }
-           
-            bool wasCompleted = task.Status == DevTrack.Models.TaskStatus.Completed;
-            bool willBeCompleted = updatedTask.Status == DevTrack.Models.TaskStatus.Completed;
-            
-            task.Title = updatedTask.Title;
+
+            bool wasCompleted =
+                task.Status == DevTrack.Models.TaskStatus.Completed;
+
+            bool willBeCompleted =
+                updatedTask.Status == DevTrack.Models.TaskStatus.Completed;
+
+            task.Title = updatedTask.Title.Trim();
             task.Description = updatedTask.Description;
             task.Priority = updatedTask.Priority;
             task.DueDate = updatedTask.DueDate;
@@ -78,33 +106,40 @@ namespace DevTrack.Controllers
             if (!wasCompleted && willBeCompleted)
             {
                 task.CompletedAt = DateTime.Now;
-                task.WasCompletedLate = task.DueDate.HasValue && 
-                    task.CompletedAt!.Value.Date > task.DueDate.Value.Date;
+
+                task.WasCompletedLate =
+                    task.DueDate.HasValue &&
+                    task.CompletedAt.Value > task.DueDate.Value;
             }
+
             else if (wasCompleted && !willBeCompleted)
             {
                 task.CompletedAt = null;
                 task.WasCompletedLate = null;
             }
+
             await _context.SaveChangesAsync();
 
             return Ok(task);
-
         }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(int id)
         {
             var task = await _context.Tasks
-                .FirstOrDefaultAsync(task => task.Id == id && !task.IsDeleted);
-        if (task == null)
+                .FirstOrDefaultAsync(task =>
+                    task.Id == id && !task.IsDeleted);
+
+            if (task == null)
             {
                 return NotFound();
             }
-        task.IsDeleted = true;
 
-        await _context.SaveChangesAsync();
+            task.IsDeleted = true;
 
-        return NoContent();
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }
